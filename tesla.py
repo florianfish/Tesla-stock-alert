@@ -37,7 +37,7 @@ def send_telegram_notif(message):
 for city, url in urls.items():
     try:
         # Configuration du navigateur Chrome
-        driver = uc.Chrome(headless=True, use_subprocess=False)
+        driver = uc.Chrome(headless=True, use_subprocess=True)
         driver.get(url)
         time.sleep(2)
         html = driver.page_source
