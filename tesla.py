@@ -1,80 +1,45 @@
-import json
-import pprint
+import undetected_chromedriver as uc
 import time
-import threading
-import re
-
-from datetime import datetime
-
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.chrome.options import Options
-
-def Mbox(title, text, style):
-    return ctypes.windll.user32.MessageBoxW(0, text, title, style)
-
-import ctypes  # An included library with Python install.
-
-html = None
 
 urls = {
-    "Toronto": 'https://www.tesla.com/en_CA/inventory/new/m3?TRIM=SRPRWD,LRAWD,LRAWDP&arrangeby=plh&zip=M3A1C6&range=200',
-    "Quebec City" : 'https://www.tesla.com/en_CA/inventory/new/m3?TRIM=SRPRWD,LRAWD,LRAWDP&arrangeby=plh&zip=G1N2G3&range=200',
-    "Montreal" : 'https://www.tesla.com/en_CA/inventory/new/m3?TRIM=SRPRWD,LRAWD,LRAWDP&arrangeby=plh&zip=H1K&range=200',
+    "Rennes": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD%2CM3RWD&PAINT=WHITE&arrangeby=plh&zip=35000&range=0',
+    "Nantes": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD%2CM3RWD&PAINT=WHITE&arrangeby=plh&zip=44000&range=0'
 }
 
-results_container_selector = 'div.results-container.results-container--grid.results-container--has-results'
-delay = 10  # seconds
+# Fonction pour récupérer les informations basiques d'une card (= voiture)
+def get_basic_info(card):
+    infos_basic = card.find('div', class_='result-basic-info')
+    modele = infos_basic.find('div', class_='tds-text_color--10').get_text()
+    status = infos_basic.find('div', class_='tds-text--caption').get_text()
+    return modele, status
 
-priceThreshold = 55990
+# Fonction pour récupérer le prix d'une card (= voiture
+def get_price(card):
+    price = card.find('div', class_='result-price')
+    purchase_price = price.find('span', class_='result-purchase-price tds-text--h4').get_text()
+    return purchase_price
 
-while True:
+for city, url in urls.items():
+    try:
+        # Configuration du navigateur Chrome
+        driver = uc.Chrome(headless=True, use_subprocess=False)
+        driver.get(url)
+        time.sleep(2)
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
 
-    for city in urls:
+        cards = soup.find_all('article', class_='result card')
 
-        try:
+        nombre = len(cards)
+        print("Nombre de véhicules à " + city + " :", nombre)
 
-            print(datetime.now().strftime("%H:%M:%S") + " Searching Tesla's website in " + city)
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")
-            browser = webdriver.Chrome('C:/Users/mmowbray/Desktop/chromedriver.exe', options=chrome_options)
-            browser.get(urls[city])
+        for card in cards:
+            modele_libelle, status_libelle = get_basic_info(card)
+            purchase_price_libelle = get_price(card)
 
-            # wait for results to be displayed
-            WebDriverWait(browser, delay).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, results_container_selector))
-            )
+            print('- ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle)
 
-        except TimeoutException:
-            print('Loading took too much time!')
-        else:
-            html = browser.page_source
-        finally:
-            browser.quit()
-
-        if html:
-            soup = BeautifulSoup(html, 'lxml')
-            cars = [];
-            for car_html in soup.select_one(results_container_selector).findChildren('article'):
-
-                car = {}
-
-                car['price'] = int(re.sub('[^0-9]', '', car_html.select_one('section.result-header').select_one('div.result-pricing').select_one('h3').text.replace('$', '').replace(',', '')))
-                car['colour'] = car_html.select('section.result-features.features-grid')[0].select('ul')[1].select('li')[0].text
-                car['type'] = car_html.select_one('section.result-header').select_one('div.result-basic-info').select_one('h3').text
-                car['trim'] = car_html.select_one('section.result-header').select_one('div.result-basic-info').select('div')[0].text
-                car['mileage'] = int(car_html.select_one('section.result-header').select_one('div.result-basic-info').select('div')[1].text.replace('Less than ', '').replace(' km odometer', '').replace(',', ''))
-                car['location'] = car_html.select_one('section.result-header').select_one('div.result-basic-info').select('div')[2].text
-                car['wheels'] = re.sub('[^0-9]', '', car_html.select('section.result-features.features-grid')[0].select('ul')[1].select('li')[1].text) + " inch wheels"
-                car['interior'] = car_html.select('section.result-features.features-grid')[0].select('ul')[1].select('li')[2].text
-
-                if(car['price'] < priceThreshold):
-                    cars.append(car)
-                    threading.Thread(target=Mbox, args=('YOUR TESLA IS READY', 'There is a Tesla for sale for in ' + str(car['location']) + "\n\n Details: \n\n " + json.dumps(car), 1)).start()
-                    print("FOUND A CAR for " + str(car['price']) + "$ in " + city)
-
-            time.sleep(30) # seconds
+    finally:
+        # Fermer le navigateur après avoir terminé
+        driver.quit()
