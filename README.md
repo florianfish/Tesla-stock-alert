@@ -6,4 +6,4 @@ This Python script allows you to scrape information about available Tesla vehicl
 
 Make sure you have Python installed on your machine. You can install the required dependencies by running the following command:
 
-pip install undetected-chromedriver beautifulsoup4
+`pip install undetected-chromedriver beautifulsoup4 python-decouple telegram`
