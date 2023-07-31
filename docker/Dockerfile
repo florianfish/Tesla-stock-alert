@@ -11,7 +11,7 @@ LABEL Maintainer="florianfish"
 WORKDIR /usr/app/src
 
 #to COPY the remote file at working directory in container
-COPY tesla.py ./
+COPY ../tesla.py ./
 # Now the structure looks like this '/usr/app/src/test.py'
 
 
