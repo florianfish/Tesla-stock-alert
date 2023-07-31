@@ -1,7 +1,6 @@
 import undetected_chromedriver as uc
 import time
 from bs4 import BeautifulSoup
-import telegram
 import requests
 from decouple import config
 
@@ -50,7 +49,6 @@ for city, url in urls.items():
             purchase_price_libelle = get_price(card)
 
             if status_libelle == "Véhicule prêt à être livré":
-                print('SEND NOTIF !!!! => ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle)
                 message_to_send = '[' + city + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
                 send_telegram_notif(message_to_send)
     finally:
