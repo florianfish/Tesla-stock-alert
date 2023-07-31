@@ -8,11 +8,18 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+import re
+import urllib.parse
 
 urls = {
-    #"Rennes": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD%2CM3RWD&PAINT=WHITE&arrangeby=plh&zip=35000&range=0',
-    #"Nantes": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD%2CM3RWD&PAINT=WHITE&arrangeby=plh&zip=44000&range=0',
-    "Test": 'https://www.tesla.com/fr_FR/inventory/new/my?PAINT=WHITE&arrangeby=plh&zip=35000&range=200'
+    "Rennes": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD%2CM3RWD&PAINT=WHITE&arrangeby=plh&zip=35000&range=200',
+    #"Test": 'https://www.tesla.com/fr_FR/inventory/new/my?PAINT=WHITE&arrangeby=plh&zip=35000&range=200'
+}
+
+modeles = {
+    "222": "LRWY222", # Model Y Propulsion
+    "218": "XP7Y218", # Model Y Grande Autonomie, Transmission intégrale Dual Motor
+    "228":"LRW3228", # Model 3 Propulsion & Model 3 Grande Autonomie, Propulsion
 }
 
 ########################
@@ -71,19 +78,27 @@ def send_telegram_notif(message):
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage?chat_id={telegram_chat_id}&text={message}"
     requests.post(url)
 
+
+#print(get_data_id_from_article('<article class="result card" data-id="234_878a18cf9846793b241c7a02d1f511ad-search-result-container"><section class="result-header"></article>'))
+
 for city, url in urls.items():
     try:
         html = get_html_source(url)
         soup = BeautifulSoup(html, 'html.parser')
         cards = soup.find_all('article', class_='result card')
-
+        notifSent = False
         for card in cards:
             modele_libelle, status_libelle = get_basic_info(card)
             purchase_price_libelle = get_price(card)
-
-            print('[' + city + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle)
-            """ if status_libelle == "Véhicule prêt à être livré":
+            
+            message = '[' + city + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
+            
+            print(message)
+            if status_libelle == "Véhicule prêt à être livré":
                 message_to_send = '[' + city + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
-                send_telegram_notif(message_to_send) """
+                send_telegram_notif(message_to_send)
+                notifSent = True
+        if notifSent is True:
+            send_telegram_notif(urllib.parse.quote(url))
     finally:
         print('ended')
