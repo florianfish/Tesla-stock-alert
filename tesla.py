@@ -12,14 +12,15 @@ import re
 import urllib.parse
 
 urls = {
-    "Rennes": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD%2CM3RWD&PAINT=WHITE&arrangeby=plh&zip=35000&range=200',
-    #"Test": 'https://www.tesla.com/fr_FR/inventory/new/my?PAINT=WHITE&arrangeby=plh&zip=35000&range=200'
+    "35000": 'https://www.tesla.com/fr_FR/inventory/new/m3?TRIM=LRRWD,M3RWD&PAINT=WHITE,BLUE,GRAY&arrangeby=plh&zip=35000&range=200',
+    "44000": 'https://www.tesla.com/fr_FR/inventory/new/my?TRIM=MYRWD&PAINT=WHITE,BLUE,GRAY&arrangeby=relevance&zip=35000&range=200'
 }
 
 modeles = {
     "222": "LRWY222", # Model Y Propulsion
     "218": "XP7Y218", # Model Y Grande Autonomie, Transmission intégrale Dual Motor
-    "228":"LRW3228", # Model 3 Propulsion & Model 3 Grande Autonomie, Propulsion
+    "228": "LRW3228", # Model 3 Grande Autonomie, Propulsion
+    "238": "LRW3238" # Model 3 Propulsion
 }
 
 ########################
@@ -78,10 +79,25 @@ def send_telegram_notif(message):
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage?chat_id={telegram_chat_id}&text={message}"
     requests.post(url)
 
+def get_link_modele(card, zipcode):
+    pattern = r'<article class="result card" data-id="([^"]+)">'
+    result = re.search(pattern, card.prettify())
+
+    if result:
+        selected_part = result.group(1).split('_')
+        id_modele = selected_part[0]
+        uuid_modele = selected_part[1].replace('-search-result-container', '')
+        code_modele = modeles[id_modele]
+
+        link = "https://www.tesla.com/fr_FR/m3/order/" + code_modele + "_" + uuid_modele + "?postal=" + zipcode + "&region=FR"
+        return link
+    else:
+        return None
+
 
 #print(get_data_id_from_article('<article class="result card" data-id="234_878a18cf9846793b241c7a02d1f511ad-search-result-container"><section class="result-header"></article>'))
 
-for city, url in urls.items():
+for zipcode, url in urls.items():
     try:
         html = get_html_source(url)
         soup = BeautifulSoup(html, 'html.parser')
@@ -90,13 +106,15 @@ for city, url in urls.items():
         for card in cards:
             modele_libelle, status_libelle = get_basic_info(card)
             purchase_price_libelle = get_price(card)
+            link = get_link_modele(card, zipcode)
             
-            message = '[' + city + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
+            message = '[' + zipcode + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
+            if link is not None:
+                message = message + ' - ' + link
             
-            print(message)
             if status_libelle == "Véhicule prêt à être livré":
-                message_to_send = '[' + city + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
-                send_telegram_notif(message_to_send)
+                message_to_send = '[' + zipcode + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
+                #send_telegram_notif(message_to_send)
                 notifSent = True
         if notifSent is True:
             send_telegram_notif(urllib.parse.quote(url))
