@@ -68,7 +68,7 @@ def get_basic_info(card):
     status = infos_basic.find('div', class_='tds-text--caption').get_text()
     return modele, status
 
-# Fonction pour récupérer le prix d'une card (= voiture
+# Fonction pour récupérer le prix d'une card (=voiture)
 def get_price(card):
     price = card.find('div', class_='result-price')
     purchase_price = price.find('span', class_='result-purchase-price tds-text--h4').get_text()
@@ -79,6 +79,7 @@ def send_telegram_notif(message):
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage?chat_id={telegram_chat_id}&text={message}"
     requests.post(url)
 
+# Fonction pour récupérer chaque lien de chaque card (=voiture)
 def get_link_modele(card, zipcode):
     pattern = r'<article class="result card" data-id="([^"]+)">'
     result = re.search(pattern, card.prettify())
