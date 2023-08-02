@@ -1,11 +1,19 @@
 import requests
 from decouple import config
+import sys
 
 
 ########################
 # VARIABLES
 ########################
 PRICE_LIMIT = 139000
+# Récupérer les arguments passés via la ligne de commande
+print_all_results = False  # Valeur par défaut, si le paramètre n'est pas passé
+
+if len(sys.argv) > 1:
+    parametre = sys.argv[1]
+    if parametre.lower() in ["true", "1"]:
+        print_all_results = True
 
 ########################
 # Telegram configuration
@@ -19,13 +27,14 @@ urls = {
 }
 # Fonction pour envoyer une notif Telegram
 def send_telegram_notif(message):
-    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage?chat_id={telegram_chat_id}&text={message}"
+    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage?chat_id={telegram_chat_id}&text={message}&disable_web_page_preview=true"
     requests.post(url)
 
 for zipcode, url in urls.items():
     print(f"::::::::::::::::::::")
     print(f":: {zipcode} ::")
     print(f"::::::::::::::::::::")
+    message_all_results = "[" + zipcode + "]\n\n"
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
@@ -49,16 +58,22 @@ for zipcode, url in urls.items():
                 match = True
                 message = f"{trim_name} à {inventory_price} € >> {link}"
                 #send_telegram_notif(message)
-                print(f"  Modèle : {trim_name}")
+                """ print(f"  Modèle : {trim_name}")
                 print(f"  Prêt à la livraison : {is_at_location}")
                 print(f"  En cours d'acheminement: {in_transit}")
                 print(f"  Véhicule de démonstration : {is_demo}")
                 print(f"  Prix : {inventory_price}")
                 print(f"  Hash : {hash}")
                 print(f"  Lien : {link}")
-                print("-" * 30)  # Ligne de séparation entre les véhicules
+                print("-" * 30)  # Ligne de séparation entre les véhicules """
+            if print_all_results is True:
+                message_all_results = message_all_results + trim_name + " à " + str(inventory_price) + " €, En transit = " + str(in_transit) + ", Démonstration = " + str(is_demo) + " (" + link + ")\n"
         if match is False:
             print("Aucun résultat :'(")
     else:
-        print(f"Erreur de requête : {response.status_code}")
-    
+        print(f"Error!")
+
+    if print_all_results is True and zipcode == "35000":
+        print(message_all_results)
+        send_telegram_notif(message_all_results)
+
