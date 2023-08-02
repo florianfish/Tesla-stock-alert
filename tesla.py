@@ -29,7 +29,7 @@ modeles = {
 telegram_chat_id = config("TELEGRAM_CHAT_ID")
 telegram_token = config("TELEGRAM_API_TOKEN")
 
-def get_html_source(url, wait_time=20):
+def get_html_source(url, wait_delay=2, class_name=None, scrolling=False):
     try:
         # Configurer les options de Chrome (ajoutez '--headless' si vous voulez exécuter en mode sans tête)
         options = Options()
@@ -41,13 +41,33 @@ def get_html_source(url, wait_time=20):
         driver = webdriver.Chrome(options=options)
 
         # Attendre que la page soit complètement chargée (modifier le délai selon vos besoins)
-        wait = WebDriverWait(driver, 20)
+        wait = WebDriverWait(driver, wait_delay)
 
         # Charger la page
         driver.get(url)
 
+        if scrolling is True:
+            # Get scroll height
+            last_height = driver.execute_script("return document.body.scrollHeight")
+
+            while True:
+                # Scroll down to bottom
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+                # Wait to load page
+                time.sleep(0.5)
+
+                # Calculate new scroll height and compare with last scroll height
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
+
+        wait = WebDriverWait(driver, wait_delay)
+
         # Attendre que le contenu de la page soit complètement chargé
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'results-container--has-results')))
+        if class_name is not None:
+            wait.until(EC.presence_of_element_located((By.CLASS_NAME, class_name)))
 
         # Récupérer le code HTML complet de la page
         html_content = driver.page_source
@@ -60,6 +80,15 @@ def get_html_source(url, wait_time=20):
     except Exception as e:
         print(f"Une erreur s'est produite : {e}")
         return None
+
+# Fonction pour faire défiler vers le bas
+def scroll_to_bottom(driver, scrolls=5):
+    for _ in range(scrolls):
+        # Faites défiler vers le bas
+        driver.execute_script('window.scrollTo(0, document.documentElement.scrollHeight);')
+
+        # Attendez un court instant pour que la page se charge
+        driver.implicitly_wait(0.1)
 
 # Fonction pour récupérer les informations basiques d'une card (= voiture)
 def get_basic_info(card):
@@ -94,13 +123,25 @@ def get_link_modele(card, zipcode):
         return link
     else:
         return None
+    
+def get_hub_delivering(link):
+    html_car = get_html_source(link, wait_delay=10, scrolling=True) #, class_name='tds--padding--large'
+    print(html_car)
+    quit()
+    # <p class="tds-text--500">Lyon Delivery HUB</p>
+    pattern = r'<p class="tds-text--([^"]+)">([^"]+)</p>'
+    result = re.search(pattern, html_car)
+    return result
 
 
-#print(get_data_id_from_article('<article class="result card" data-id="234_878a18cf9846793b241c7a02d1f511ad-search-result-container"><section class="result-header"></article>'))
+test = get_hub_delivering('https://www.tesla.com/fr_FR/my/order/XP7Y282_380c4d6f193bfe51e6928442b70ac550?postal=35000')
+print(test)
+quit()
+
 
 for zipcode, url in urls.items():
     try:
-        html = get_html_source(url)
+        html = get_html_source(url, class_name='results-container--has-results')
         soup = BeautifulSoup(html, 'html.parser')
         cards = soup.find_all('article', class_='result card')
         notifSent = False
@@ -114,10 +155,14 @@ for zipcode, url in urls.items():
                 message = message + ' - ' + link
             
             if status_libelle == "Véhicule prêt à être livré":
+                # TODO: récupérer l'adresse sur la fiche de la voiture
+                if link is not None:
+                    html_car = get_html_source(link)
+
                 message_to_send = '[' + zipcode + '] ' + modele_libelle + ' - ' + status_libelle + ' - ' + purchase_price_libelle
                 #send_telegram_notif(message_to_send)
                 notifSent = True
-        if notifSent is True:
-            send_telegram_notif(urllib.parse.quote(url))
+        #if notifSent is True:
+            #send_telegram_notif(urllib.parse.quote(url))
     finally:
         print('ended')
