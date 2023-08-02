@@ -57,15 +57,7 @@ for zipcode, url in urls.items():
             if inventory_price <= PRICE_LIMIT and is_at_location is True and is_demo is False:
                 match = True
                 message = f"{trim_name} à {inventory_price} € >> {link}"
-                #send_telegram_notif(message)
-                """ print(f"  Modèle : {trim_name}")
-                print(f"  Prêt à la livraison : {is_at_location}")
-                print(f"  En cours d'acheminement: {in_transit}")
-                print(f"  Véhicule de démonstration : {is_demo}")
-                print(f"  Prix : {inventory_price}")
-                print(f"  Hash : {hash}")
-                print(f"  Lien : {link}")
-                print("-" * 30)  # Ligne de séparation entre les véhicules """
+                send_telegram_notif(message)
             if print_all_results is True:
                 message_all_results = message_all_results + trim_name + " à " + str(inventory_price) + " €, En transit = " + str(in_transit) + ", Démonstration = " + str(is_demo) + " (" + link + ")\n"
         if match is False:
