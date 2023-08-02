@@ -6,7 +6,7 @@ import sys
 ########################
 # VARIABLES
 ########################
-PRICE_LIMIT = 139000
+PRICE_LIMIT = 39000
 # Récupérer les arguments passés via la ligne de commande
 print_all_results = False  # Valeur par défaut, si le paramètre n'est pas passé
 
