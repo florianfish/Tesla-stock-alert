@@ -44,7 +44,11 @@ for zipcode, url in urls.items():
             hash = vehicle.get("Hash", "")
             vin = vehicle.get("VIN", "")
             trim_name = vehicle.get("TrimName", "")
-            paint = vehicle.get("PAINT", "")
+            paint = vehicle.get("PAINT", None)
+            if paint is not None:
+                paint = paint[0]
+            else:
+                paint = ""
             in_transit = vehicle.get("InTransit", False)
             is_demo = bool(vehicle.get("IsDemo", False))
             is_at_location = bool(vehicle.get("IsAtLocation", False))
