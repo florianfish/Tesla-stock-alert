@@ -60,7 +60,7 @@ for zipcode, url in urls.items():
                 message = f"{trim_name} à {inventory_price} €, {paint} >> {link}"
                 send_telegram_notif(message)
             if print_all_results is True:
-                message_all_results = message_all_results + trim_name + " à " + str(inventory_price) + " €, Couleur {paint}, En transit = " + str(in_transit) + ", Démonstration = " + str(is_demo) + " (" + link + ")\n"
+                message_all_results = message_all_results + trim_name + " à " + str(inventory_price) + " €, Couleur " + paint + ", En transit = " + str(in_transit) + ", Démonstration = " + str(is_demo) + " (" + link + ")\n"
         if match is False:
             print("Aucun résultat :'(")
     else:
