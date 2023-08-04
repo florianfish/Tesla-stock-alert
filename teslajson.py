@@ -60,7 +60,7 @@ def process_model_data(model, zipcode, type, url, print_all_results):
                 total_price = vehicle.get("TotalPrice", 0)
                 link = "https://www.tesla.com/fr_FR/" + type + "/order/" + vin + "?postal=" + zipcode
 
-                if inventory_price <= PRICE_LIMIT and is_at_location is True and is_demo is False:
+                if inventory_price <= PRICE_LIMIT and is_demo is False:
                     match = True
                     message = f"{trim_name} à {inventory_price} €, {paint} >> {link}"
                     send_telegram_notif(message)
@@ -81,15 +81,10 @@ def main():
     print_all_results = args.print_all_results
 
     urls = {
-        "MODEL Y": {
-            'zipcode': "35000",
-            'type': 'my',
-            'url': "https://www.tesla.com/inventory/api/v1/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22my%22%2C%22condition%22%3A%22new%22%2C%22options%22%3A%7B%22TRIM%22%3A%5B%22MYRWD%22%5D%2C%22PAINT%22%3A%5B%22WHITE%22%2C%22BLUE%22%2C%22SILVER%22%5D%7D%2C%22arrangeby%22%3A%22Price%22%2C%22order%22%3A%22asc%22%2C%22market%22%3A%22FR%22%2C%22language%22%3A%22fr%22%2C%22super_region%22%3A%22north%20america%22%2C%22lng%22%3A-1.7075198%2C%22lat%22%3A48.11734209999999%2C%22zip%22%3A%2235000%22%2C%22range%22%3A50%2C%22region%22%3A%22FR%22%7D%2C%22offset%22%3A0%2C%22count%22%3A50%2C%22outsideOffset%22%3A0%2C%22outsideSearch%22%3Afalse%7D",
-        },
         "MODEL 3": {
             'zipcode': "35000",
             'type': 'm3',
-            'url': 'https://www.tesla.com/inventory/api/v1/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22m3%22%2C%22condition%22%3A%22new%22%2C%22options%22%3A%7B%22TRIM%22%3A%5B%22LRRWD%22%2C%22M3RWD%22%5D%2C%22PAINT%22%3A%5B%22GRAY%22%2C%22WHITE%22%2C%22BLUE%22%5D%7D%2C%22arrangeby%22%3A%22Price%22%2C%22order%22%3A%22asc%22%2C%22market%22%3A%22FR%22%2C%22language%22%3A%22fr%22%2C%22super_region%22%3A%22north%20america%22%2C%22lng%22%3A-1.7075198%2C%22lat%22%3A48.11734209999999%2C%22zip%22%3A%2244000%22%2C%22range%22%3A50%2C%22region%22%3A%22FR%22%7D%2C%22offset%22%3A0%2C%22count%22%3A50%2C%22outsideOffset%22%3A0%2C%22outsideSearch%22%3Afalse%7D',
+            'url': 'https://www.tesla.com/inventory/api/v1/inventory-results?query=%7B%22query%22%3A%7B%22model%22%3A%22m3%22%2C%22condition%22%3A%22new%22%2C%22options%22%3A%7B%7D%2C%22arrangeby%22%3A%22Price%22%2C%22order%22%3A%22asc%22%2C%22market%22%3A%22FR%22%2C%22language%22%3A%22fr%22%2C%22super_region%22%3A%22north%20america%22%2C%22lng%22%3A-1.7075198%2C%22lat%22%3A48.11734209999999%2C%22zip%22%3A%2235000%22%2C%22range%22%3A200%2C%22region%22%3A%22FR%22%7D%2C%22offset%22%3A0%2C%22count%22%3A50%2C%22outsideOffset%22%3A0%2C%22outsideSearch%22%3Afalse%7D',
         }
     }
 
